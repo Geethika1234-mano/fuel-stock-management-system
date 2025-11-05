@@ -9,21 +9,30 @@ export default function Login() {
   const [error, setError] = useState("");
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+ const handleSubmit = async (e) => {
+  e.preventDefault();
+  setError("");
+  setLoading(true);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
-    try {
-      const res = await axios.post("/auth/login", form);
-      localStorage.setItem("token", res.data.access_token);
+  try {
+    // Temporary development credentials
+    if (form.username === "admin@gmail.com" && form.password === "1234") {
+      localStorage.setItem("token", "dev-temp-token");
       window.location.href = "/dashboard";
-    } catch {
-      setError("Invalid username or password.");
-    } finally {
-      setLoading(false);
+      return;
     }
-  };
+
+    // Otherwise, call your backend
+    const res = await axios.post("/auth/login", form);
+    localStorage.setItem("token", res.data.access_token);
+    window.location.href = "/dashboard";
+  } catch (err) {
+    setError("Invalid credentials. Try again.");
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[var(--ocean)] to-[var(--aqua)] text-slate-700">
@@ -88,3 +97,4 @@ export default function Login() {
     </div>
   );
 }
+

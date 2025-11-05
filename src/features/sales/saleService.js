@@ -1,0 +1,1 @@
+export const getSales = ()=> fetch('/api/sales').then(r=>r.json());

@@ -1,0 +1,1 @@
+export const getStock = ()=> fetch('/api/stock').then(r=>r.json());

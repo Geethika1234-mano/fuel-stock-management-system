@@ -1,0 +1,1 @@
+export default function StockList(){ return <div>Stock List</div>; }

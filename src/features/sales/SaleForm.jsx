@@ -1,0 +1,1 @@
+export default function SaleForm(){ return <div>Sale Form</div>; }

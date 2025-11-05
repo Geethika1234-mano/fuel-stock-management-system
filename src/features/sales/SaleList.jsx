@@ -1,0 +1,1 @@
+export default function SaleList(){ return <div>Sale List</div>; }

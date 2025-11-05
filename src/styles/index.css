@@ -1,0 +1,7 @@
+@import "./theme.css";
+@import "tailwindcss";
+
+body {
+  background-color: var(--ice);
+  color: var(--midnight);
+}

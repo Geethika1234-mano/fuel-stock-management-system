@@ -1,0 +1,1 @@
+export const getTanks = ()=> fetch('/api/tanks').then(r=>r.json());

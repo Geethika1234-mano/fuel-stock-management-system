@@ -1,0 +1,1 @@
+export const getDeliveries = ()=> fetch('/api/deliveries').then(r=>r.json());

@@ -1,0 +1,1 @@
+export default function StockForm(){ return <div>Stock Form</div>; }

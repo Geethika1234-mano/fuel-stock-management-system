@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { apiFetch } from "../api/api";
 
 export default function Register() {
   const [username, setUsername] = useState("");
@@ -15,11 +16,11 @@ export default function Register() {
     setSuccess("");
 
     try {
-      const res = await fetch("http://127.0.0.1:5000/register", {
+      const res = await apiFetch("/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, email, password }),
-      });
+        });
       const data = await res.json();
 
       if (res.ok) {

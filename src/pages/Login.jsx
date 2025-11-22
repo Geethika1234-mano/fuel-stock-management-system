@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { apiFetch } from "../api/api";
 
 export default function Login() {
   const [username, setUsername] = useState("");
@@ -11,11 +12,12 @@ export default function Login() {
     e.preventDefault();
     setError("");
     try {
-      const res = await fetch("http://127.0.0.1:5000/login", {
-        method: "POST",
+      const res = await apiFetch("/login", {
+  method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
-      });
+
+  body: JSON.stringify({ username, password }),
+});
       const data = await res.json();
 
       if (res.ok) {

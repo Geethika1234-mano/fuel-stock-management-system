@@ -33,18 +33,42 @@ export default function StockFormModal({ open, onClose, initial, onSaved }) {
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const method = initial ? "PUT" : "POST";
-    const url = initial ? `/fuelstock/${initial.FuelStockID}` : "/fuelstock";
-    try {
-      const res = await apiFetch(url, { method, body: JSON.stringify(form) });
-      onSaved(res);
-      onClose();
-    } catch (err) {
-      console.error("Failed to save stock:", err);
+  const API_URL = "https://fuel-stock-backend-b6fccqcyc7exfbas.uksouth-01.azurewebsites.net";
+
+const handleSubmit = async (e) => {
+  e.preventDefault();
+
+  const method = initial ? "PUT" : "POST";
+  const token = localStorage.getItem("token");
+
+  const url = initial
+    ? `${API_URL}/fuelstock/${initial.FuelStockID}`
+    : `${API_URL}/fuelstock`;
+
+  try {
+    const res = await fetch(url, {
+      method,
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify(form)
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.msg || "Failed to save stock");
     }
-  };
+
+    onSaved(data);
+    onClose();
+  } catch (err) {
+    console.error("Failed to save stock:", err);
+    alert("Failed to save stock.");
+  }
+};
+
 
   return (
     <AnimatePresence>
@@ -201,3 +225,4 @@ export default function StockFormModal({ open, onClose, initial, onSaved }) {
     </AnimatePresence>
   );
 }
+

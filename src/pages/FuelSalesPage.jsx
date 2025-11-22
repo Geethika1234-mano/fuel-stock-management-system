@@ -14,17 +14,33 @@ export default function FuelSalesPage() {
     fetchSales();
   }, []);
 
-  const fetchSales = async () => {
-    try {
-      const data = await apiFetch("/fuelsales");
-      setSales(data);
-    } catch (err) {
-      console.error("Failed to load sales", err);
-      alert("Failed to load sales.");
-    } finally {
-      setLoading(false);
+  const API_URL = "https://fuel-stock-backend-b6fccqcyc7exfbas.uksouth-01.azurewebsites.net";
+
+const fetchSales = async () => {
+  try {
+    const token = localStorage.getItem("token");
+
+    const res = await fetch(`${API_URL}/fuelsales`, {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`
+      }
+    });
+
+    if (!res.ok) {
+      throw new Error("Failed to fetch sales");
     }
-  };
+
+    const data = await res.json();
+    setSales(data);
+  } catch (err) {
+    console.error("Failed to load sales", err);
+    alert("Failed to load sales.");
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const openAdd = () => {
     setEditing(null);
@@ -193,3 +209,4 @@ export default function FuelSalesPage() {
     </motion.div>
   );
 }
+

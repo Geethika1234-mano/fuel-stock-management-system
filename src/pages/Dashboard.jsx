@@ -11,20 +11,38 @@ export default function Dashboard() {
   const [stock, setStock] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    Promise.all([
-      apiFetch("/tanks"),
-      apiFetch("/fuelsales"),
-      apiFetch("/fuelstock"),
-    ])
-      .then(([tanksData, salesData, stockData]) => {
-        setTanks(tanksData);
-        setSales(salesData);
-        setStock(stockData);
-        setLoading(false);
-      })
-      .catch(err => console.error("Error fetching data:", err));
-  }, []);
+ const API_URL = "https://fuel-stock-backend-b6fccqcyc7exfbas.uksouth-01.azurewebsites.net";
+
+useEffect(() => {
+  async function loadData() {
+    const token = localStorage.getItem("token");
+
+    try {
+      const [tanksRes, salesRes, stockRes] = await Promise.all([
+        fetch(`${API_URL}/tanks`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }),
+        fetch(`${API_URL}/fuelsales`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }),
+        fetch(`${API_URL}/fuelstock`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+      ]);
+
+      setTanks(await tanksRes.json());
+      setSales(await salesRes.json());
+      setStock(await stockRes.json());
+    } catch (err) {
+      console.error("Error fetching dashboard data:", err);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  loadData();
+}, []);
+
 const [query, setQuery] = useState("");
 // const filteredTanks = useMemo(
 //   () => tanks.filter(t =>
@@ -233,3 +251,4 @@ const [query, setQuery] = useState("");
     </div>
   );
 }
+

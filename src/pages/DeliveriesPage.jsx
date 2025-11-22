@@ -14,16 +14,33 @@ export default function DeliveriesPage() {
     fetchDeliveries();
   }, []);
 
-  const fetchDeliveries = async () => {
-    try {
-      const data = await apiFetch("/fueldeliveries");
-      setDeliveries(data);
-    } catch (err) {
-      console.error("Failed to fetch deliveries", err);
-    } finally {
-      setLoading(false);
+const API_URL = "https://fuel-stock-backend-b6fccqcyc7exfbas.uksouth-01.azurewebsites.net";
+
+const fetchDeliveries = async () => {
+  try {
+    const token = localStorage.getItem("token");
+
+    const res = await fetch(`${API_URL}/fueldeliveries`, {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!res.ok) {
+      throw new Error("Failed to fetch deliveries");
     }
-  };
+
+    const data = await res.json();
+    setDeliveries(data);
+  } catch (err) {
+    console.error("Failed to fetch deliveries", err);
+    alert("Failed to fetch deliveries.");
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const handleSave = (saved) => {
     if (editing) {
@@ -158,3 +175,4 @@ export default function DeliveriesPage() {
     </motion.div>
   );
 }
+

@@ -12,12 +12,14 @@ export default function Login() {
     e.preventDefault();
     setError("");
     try {
-      const res = await apiFetch("/login", {
-  method: "POST",
-        headers: { "Content-Type": "application/json" },
+  const API_URL = "https://fuel-stock-backend-b6fccqcsyc7exfbas.uksouth-01.azurewebsites.net";
 
+const res = await fetch(`${API_URL}/login`, {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
   body: JSON.stringify({ username, password }),
 });
+
       const data = await res.json();
 
       if (res.ok) {
@@ -65,3 +67,4 @@ export default function Login() {
     </div>
   );
 }
+

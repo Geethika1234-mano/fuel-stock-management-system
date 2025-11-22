@@ -12,7 +12,7 @@ export default function Login() {
     e.preventDefault();
     setError("");
     try {
-  const API_URL = "https://fuel-stock-backend-b6fccqcsyc7exfbas.uksouth-01.azurewebsites.net";
+  const API_URL = "https://fuel-stock-backend-b6fccqcyc7exfbas.uksouth-01.azurewebsites.net";
 
 const res = await fetch(`${API_URL}/login`, {
   method: "POST",
@@ -67,4 +67,5 @@ const res = await fetch(`${API_URL}/login`, {
     </div>
   );
 }
+
 

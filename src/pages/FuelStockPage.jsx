@@ -12,16 +12,33 @@ export default function FuelStockPage() {
 
   useEffect(() => { fetchStock(); }, []);
 
-  const fetchStock = async () => {
-    try {
-      const data = await apiFetch("/fuelstock");
-      setStock(data);
-    } catch {
-      console.error("Failed to fetch fuel stock");
-    } finally {
-      setLoading(false);
+  const API_URL = "https://fuel-stock-backend-b6fccqcyc7exfbas.uksouth-01.azurewebsites.net";
+
+const fetchStock = async () => {
+  try {
+    const token = localStorage.getItem("token");
+
+    const res = await fetch(`${API_URL}/fuelstock`, {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`
+      }
+    });
+
+    if (!res.ok) {
+      throw new Error("Failed to fetch stock");
     }
-  };
+
+    const data = await res.json();
+    setStock(data);
+  } catch (err) {
+    console.error("Failed to fetch fuel stock", err);
+    alert("Failed to fetch fuel stock.");
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const handleSave = (saved) => {
     if (editing) {
@@ -119,3 +136,4 @@ export default function FuelStockPage() {
     </motion.div>
   );
 }
+

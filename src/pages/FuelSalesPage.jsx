@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Plus, Pencil, Trash2, Fuel } from "lucide-react";
-import { apiFetch } from "../api/api";
+import { apiGet } from "../api/http";
 import SaleFormModal from "../components/SaleFormModal";
+import { apiDelete } from "../api/http";
 
 export default function FuelSalesPage() {
   const [sales, setSales] = useState([]);
@@ -14,33 +15,17 @@ export default function FuelSalesPage() {
     fetchSales();
   }, []);
 
-  const API_URL = "https://fuel-stock-backend-b6fccqcyc7exfbas.uksouth-01.azurewebsites.net";
-
-const fetchSales = async () => {
-  try {
-    const token = localStorage.getItem("token");
-
-    const res = await fetch(`${API_URL}/fuelsales`, {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`
-      }
-    });
-
-    if (!res.ok) {
-      throw new Error("Failed to fetch sales");
+  const fetchSales = async () => {
+    try {
+      const data = await apiGet("/fuelsales");
+      setSales(data);
+    } catch (err) {
+      console.error("Failed to load sales", err);
+      alert("Failed to load sales.");
+    } finally {
+      setLoading(false);
     }
-
-    const data = await res.json();
-    setSales(data);
-  } catch (err) {
-    console.error("Failed to load sales", err);
-    alert("Failed to load sales.");
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   const openAdd = () => {
     setEditing(null);
@@ -71,7 +56,7 @@ const fetchSales = async () => {
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this record?")) return;
     try {
-      await apiFetch(`/fuelsales/${id}`, { method: "DELETE" });
+      await apiDelete(`/fuelsales/${id}`);
       setSales((a) => a.filter((s) => s.FuelSalesID !== id));
       // alert("Sale deleted."); // optional
     } catch (err) {
@@ -209,4 +194,3 @@ const fetchSales = async () => {
     </motion.div>
   );
 }
-

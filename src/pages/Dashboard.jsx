@@ -1,199 +1,235 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Fuel, Truck, Database, BarChart3, Plus, Search, LogOut } from "lucide-react";
-
-const DEMO_TANKS = [
-  { id: 1, name: "Tank 4", fuel: "BP Ultimate E5", capacity: 20000, stock: 7000 },
-  { id: 2, name: "Tank 6", fuel: "BP ULSP",        capacity: 20000, stock: 4000 },
-];
-
-const DEMO_ACTIVITY = [
-  { id: "a1", type: "delivery", label: "Delivery • BP ULSP", qty: 7000, tank: "Tank 6", ts: "2025-08-28 07:50" },
-  { id: "a2", type: "sale",     label: "Sale • BP Ultimate E5", qty: 320, tank: "Tank 4", ts: "2025-08-28 08:30" },
-  { id: "a3", type: "sale",     label: "Sale • BP ULSP",        qty: 160, tank: "Tank 6", ts: "2025-08-28 09:10" },
-];
-
-function Stat({ icon, label, value, sub }) {
-  return (
-    <div className="rounded-2xl p-4 bg-white shadow-sm border">
-      <div className="flex items-center gap-2 text-[var(--ocean)]">{icon}<span className="text-sm font-medium text-slate-600">{label}</span></div>
-      <div className="mt-2 text-2xl font-bold text-slate-800">{value}</div>
-      {sub && <div className="text-xs text-slate-500 mt-1">{sub}</div>}
-    </div>
-  );
-}
+import { Fuel, Truck, Database, BarChart3 } from "lucide-react";
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+import { apiFetch } from "../api/api";
+import StatCard from "../components/StatCard";
 
 export default function Dashboard() {
-  const [query, setQuery] = useState("");
+  const [tanks, setTanks] = useState([]);
+  const [sales, setSales] = useState([]);
+  const [stock, setStock] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    Promise.all([
+      apiFetch("/tanks"),
+      apiFetch("/fuelsales"),
+      apiFetch("/fuelstock"),
+    ])
+      .then(([tanksData, salesData, stockData]) => {
+        setTanks(tanksData);
+        setSales(salesData);
+        setStock(stockData);
+        setLoading(false);
+      })
+      .catch(err => console.error("Error fetching data:", err));
+  }, []);
+const [query, setQuery] = useState("");
+// const filteredTanks = useMemo(
+//   () => tanks.filter(t =>
+//     `${t.TankID} ${t.StationID}`.toLowerCase().includes(query.toLowerCase())
+//   ),
+//   [tanks, query]
+// );
 
   const totals = useMemo(() => {
-    const litresSold = 320 + 160; // demo
-    const deliveries = 7000;      // demo
-    const stock = DEMO_TANKS.reduce((a, t) => a + t.stock, 0);
-    return { litresSold, deliveries, stock, variance: -0.7 };
-  }, []);
-
-  const filteredTanks = useMemo(
-    () => DEMO_TANKS.filter(t =>
-      `${t.name} ${t.fuel}`.toLowerCase().includes(query.toLowerCase())
-    ),
-    [query]
-  );
+    const totalStock = tanks.reduce((a, t) => a + (t.CurrentStock || 0), 0);
+    const totalSales = sales.reduce((a, s) => a + (s.SaleValue || 0), 0);
+    const totalLitresSold = sales.reduce((a, s) => a + (s.VolumeDispensed || 0), 0);
+    return { totalStock, totalSales, totalLitresSold };
+  }, [tanks, sales]);
 
   return (
-    <div className="min-h-screen bg-[var(--ice)] text-slate-800">
-      {/* Topbar */}
-      <header className="sticky top-0 z-10 bg-white border-b">
-        <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl grid place-items-center"
-                 style={{ background: "linear-gradient(135deg, var(--ocean), var(--aqua))" }}>
-              <Fuel className="text-white" size={18}/>
-            </div>
-            <div>
-              <h1 className="font-semibold">Fuel Stock Manager</h1>
-              <p className="text-xs text-slate-500">Dashboard</p>
-            </div>
-          </div>
+    <div className="space-y-8">
+      {/* Header Section */}
+     {/* Dashboard Header */}
+<header className="flex items-center justify-between mb-6">
+  <div>
+    <h1 className="text-xl font-semibold text-[var(--ocean)]">
+      Dashboard Overview
+    </h1>
+    <p className="text-sm text-slate-500">
+      Live data summary across tanks, sales, and stock
+    </p>
+  </div>
 
-          <div className="flex items-center gap-3">
-            <div className="hidden md:flex items-center gap-2 bg-white border px-3 py-2 rounded-xl">
-              <Search size={16} className="text-[var(--ocean)]"/>
-              <input
-                value={query}
-                onChange={(e)=>setQuery(e.target.value)}
-                placeholder="Search tanks..."
-                className="bg-transparent outline-none text-sm w-64"
-              />
-            </div>
-            <button className="px-4 py-2 rounded-xl text-white"
-                    style={{ background: "linear-gradient(135deg, var(--ocean), var(--aqua))" }}>
-              <Plus size={16} className="inline -mt-0.5 mr-1"/> New Record
-            </button>
-            <button className="px-3 py-2 rounded-xl border bg-white text-red-500">
-              <LogOut size={16}/>
-            </button>
-          </div>
-        </div>
-      </header>
+  {/* Search bar (moved here) */}
+  <div className="flex items-center gap-2 bg-white border rounded-xl px-3 py-1.5 shadow-sm hover:shadow-md transition-all">
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+      strokeWidth={2}
+      stroke="currentColor"
+      className="w-4 h-4 text-[var(--ocean)]"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 1110.5 3a7.5 7.5 0 016.15 13.65z"
+      />
+    </svg>
+    <input
+      type="text"
+      placeholder="Search..."
+      className="bg-transparent outline-none text-sm w-40 focus:w-60 transition-all"
+      value={query}
+      onChange={(e) => setQuery(e.target.value)}
+    />
+  </div>
+</header>
 
-      {/* Content */}
-      <div className="max-w-7xl mx-auto grid grid-cols-12 gap-6 px-6 py-6">
 
-        {/* Sidebar */}
-        <aside className="col-span-12 md:col-span-3 lg:col-span-2">
-          <nav className="rounded-2xl bg-white shadow-sm border p-2 sticky top-20">
-            <a className="flex items-center gap-2 p-3 rounded-xl hover:bg-[var(--breeze)]/40 transition cursor-pointer">
-              <BarChart3 size={18}/> Overview
-            </a>
-            <a className="flex items-center gap-2 p-3 rounded-xl hover:bg-[var(--breeze)]/40 transition cursor-pointer">
-              <Fuel size={18}/> Sales
-            </a>
-            <a className="flex items-center gap-2 p-3 rounded-xl hover:bg-[var(--breeze)]/40 transition cursor-pointer">
-              <Truck size={18}/> Deliveries
-            </a>
-            <a className="flex items-center gap-2 p-3 rounded-xl hover:bg-[var(--breeze)]/40 transition cursor-pointer">
-              <Database size={18}/> Stock
-            </a>
-          </nav>
-        </aside>
+      {/* Stats Section */}
+      <section className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard icon={<Fuel size={18}/>} label="Litres Sold" value={`${totals.totalLitresSold.toLocaleString()} L`} sub="From FuelSales"/>
+        <StatCard icon={<Truck size={18}/>} label="Sales Value" value={`£${totals.totalSales.toLocaleString()}`} sub="Today's Total"/>
+        <StatCard icon={<Database size={18}/>} label="Stock On Hand" value={`${totals.totalStock.toLocaleString()} L`} sub="Across all tanks"/>
+        <StatCard icon={<BarChart3 size={18}/>} label="Active Tanks" value={tanks.length} sub="Connected"/>
+      </section>
 
-        {/* Main */}
-        <main className="col-span-12 md:col-span-9 lg:col-span-10 space-y-6">
-          {/* Hero */}
-          <motion.section
-            initial={{opacity:0, y:8}}
-            animate={{opacity:1, y:0}}
-            className="rounded-2xl border bg-gradient-to-r from-white to-[var(--breeze)]/30 p-6"
-          >
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              <div>
-                <h2 className="text-xl font-semibold">Today at Cherwell S/STN</h2>
-                <p className="text-sm text-slate-600">Snapshot of sales, deliveries & stock.</p>
-              </div>
-              <div className="px-3 py-1 rounded-full text-xs font-medium bg-[var(--aqua)]/10 text-[var(--ocean)]">
-                Light Blue Theme
-              </div>
-            </div>
-          </motion.section>
+      {/* Chart Section */}
+      <motion.section
+        initial={{opacity:0, y:10}}
+        animate={{opacity:1, y:0}}
+        className="rounded-2xl bg-white shadow-md p-6 transition hover:shadow-lg"
+      >
+        <h3 className="font-semibold mb-4">Sales Trend</h3>
+        {sales.length === 0 ? (
+          <p className="text-sm text-slate-500">No sales data available.</p>
+        ) : (
+         <ResponsiveContainer width="100%" height={260}>
+  <LineChart data={sales.slice(-10)} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
+    {/* Light background grid */}
+    <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" opacity={0.6} />
 
-          {/* Stats */}
-          <section className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Stat icon={<Fuel size={16}/>} label="Litres Sold" value={`${totals.litresSold.toLocaleString()} L`} sub="vs yesterday +6%" />
-            <Stat icon={<Truck size={16}/>} label="Deliveries" value={`${totals.deliveries.toLocaleString()} L`} sub="BP ULSP • Tank 6" />
-            <Stat icon={<Database size={16}/>} label="Stock On Hand" value={`${totals.stock.toLocaleString()} L`} sub="2 tanks" />
-            <Stat icon={<BarChart3 size={16}/>} label="Variance" value={`${totals.variance}%`} sub="within tolerance" />
-          </section>
+    {/* Axes */}
+    <XAxis
+      dataKey="SaleDate"
+      tick={{ fontSize: 12, fill: "#94A3B8" }}
+      tickLine={false}
+      axisLine={false}
+    />
+    <YAxis
+      tick={{ fontSize: 12, fill: "#94A3B8" }}
+      tickLine={false}
+      axisLine={false}
+    />
 
-          {/* Tanks table */}
-          <section className="rounded-2xl bg-white shadow-sm border">
-            <div className="flex items-center justify-between p-4 border-b">
-              <h3 className="font-semibold">Tanks</h3>
-              <button className="px-3 py-2 rounded-xl border bg-white text-[var(--ocean)]">Export</button>
-            </div>
+    {/* Tooltip */}
+    <Tooltip
+      contentStyle={{
+        backgroundColor: "rgba(255,255,255,0.95)",
+        border: "1px solid #E2E8F0",
+        borderRadius: "12px",
+        boxShadow: "0 4px 10px rgba(0,0,0,0.05)",
+      }}
+      labelStyle={{ color: "#475569", fontWeight: 500 }}
+      formatter={(value) => [`£${value.toLocaleString()}`, "Sales Value"]}
+    />
 
-            <div className="overflow-auto rounded-b-2xl">
-              <table className="min-w-full">
-                <thead className="bg-[var(--breeze)]/60 text-left text-sm">
-                  <tr>
-                    <th className="px-4 py-3">Tank</th>
-                    <th className="px-4 py-3">Fuel</th>
-                    <th className="px-4 py-3">Capacity</th>
-                    <th className="px-4 py-3">Stock</th>
-                    <th className="px-4 py-3">Fill %</th>
-                  </tr>
-                </thead>
-                <tbody className="text-sm">
-                  {filteredTanks.map((t) => {
-                    const pct = Math.round((t.stock / t.capacity) * 100);
-                    return (
-                      <tr key={t.id} className="border-t">
-                        <td className="px-4 py-3 font-medium">{t.name}</td>
-                        <td className="px-4 py-3">{t.fuel}</td>
-                        <td className="px-4 py-3">{t.capacity.toLocaleString()} L</td>
-                        <td className="px-4 py-3">{t.stock.toLocaleString()} L</td>
-                        <td className="px-4 py-3">
-                          <div className="h-2 bg-[var(--ice)] rounded-full overflow-hidden">
-                            <div className="h-2"
-                                 style={{
-                                   width: `${pct}%`,
-                                   background: "linear-gradient(135deg, var(--ocean), var(--aqua))"
-                                 }} />
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </section>
+    {/* Gradient definition */}
+    <defs>
+      <linearGradient id="lineGradient" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stopColor="#8CEBFF" />
+        <stop offset="100%" stopColor="#35D7FF" />
+      </linearGradient>
+    </defs>
 
-          {/* Recent activity */}
-          <section className="rounded-2xl bg-white shadow-sm border">
-            <div className="p-4 border-b">
-              <h3 className="font-semibold">Recent Activity</h3>
-            </div>
-            <ul className="divide-y">
-              {DEMO_ACTIVITY.map((a) => (
-                <li key={a.id} className="p-4 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="h-8 w-8 rounded-lg grid place-items-center text-white"
-                         style={{ background: a.type === "delivery" ? "var(--ocean)" : "var(--aqua)" }}>
-                      {a.type === "delivery" ? <Truck size={16}/> : <Fuel size={16}/>}
-                    </div>
-                    <div>
-                      <div className="font-medium">{a.label}</div>
-                      <div className="text-xs text-slate-500">{a.tank} • {a.ts}</div>
-                    </div>
+    {/* Line */}
+    <Line
+      type="monotone"
+      dataKey="SaleValue"
+      stroke="url(#lineGradient)"
+      strokeWidth={3}
+      dot={{
+        r: 5,
+        fill: "#35D7FF",
+        stroke: "#fff",
+        strokeWidth: 2,
+      }}
+      activeDot={{
+        r: 6,
+        fill: "#8CEBFF",
+        stroke: "#fff",
+        strokeWidth: 2,
+      }}
+       isAnimationActive={true}
+  animationDuration={800}
+  animationEasing="ease-out"
+    />
+  </LineChart>
+        </ResponsiveContainer>
+
+        )}
+      </motion.section>
+
+      {/* Tanks Table */}
+   <motion.section
+  initial={{ opacity: 0, y: 10 }}
+  animate={{ opacity: 1, y: 0 }}
+  className="rounded-2xl bg-white p-6 shadow-md hover:shadow-lg transition-all"
+>
+  {/* Header */}
+  <div className="flex items-center justify-between mb-5">
+    <h3 className="font-semibold text-lg text-slate-700">Tanks</h3>
+    <span className="text-sm text-slate-500">
+      Showing {tanks.length}
+    </span>
+  </div>
+
+  {/* Content */}
+  {loading ? (
+    <p className="text-slate-500">Loading...</p>
+  ) : (
+    <div className="overflow-hidden rounded-2xl">
+      <table className="min-w-full text-sm text-slate-700">
+        <thead className="bg-[var(--breeze)]/60 text-slate-600 uppercase text-xs font-semibold tracking-wide">
+          <tr>
+            <th className="px-4 py-3 text-left">Tank ID</th>
+            <th className="px-4 py-3 text-left">Station</th>
+            <th className="px-4 py-3 text-left">Fuel Type</th>
+            <th className="px-4 py-3 text-left">Capacity</th>
+            <th className="px-4 py-3 text-left">Current Stock</th>
+            <th className="px-4 py-3 text-left">% Full</th>
+          </tr>
+        </thead>
+
+        <tbody className="divide-y divide-slate-100">
+          {tanks.map((t) => {
+            const pct = Math.round((t.CurrentStock / t.Capacity) * 100);
+            return (
+              <tr
+                key={t.TankID}
+                className="hover:bg-[var(--breeze)]/30 transition-all duration-150"
+              >
+                <td className="px-4 py-3 font-medium text-slate-700">{t.TankID}</td>
+                <td className="px-4 py-3">{t.StationID}</td>
+                <td className="px-4 py-3 text-slate-600">{t.FuelTypeID}</td>
+                <td className="px-4 py-3">{t.Capacity?.toLocaleString()} L</td>
+                <td className="px-4 py-3">{t.CurrentStock?.toLocaleString()} L</td>
+                <td className="px-4 py-3">
+                  <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                    <div
+                      className="h-2 transition-all duration-300"
+                      style={{
+                        width: `${pct}%`,
+                        background:
+                          "linear-gradient(135deg, #35D7FF 0%, #8CEBFF 100%)",
+                      }}
+                    />
                   </div>
-                  <div className="text-sm font-semibold">{a.qty.toLocaleString()} L</div>
-                </li>
-              ))}
-            </ul>
-          </section>
-        </main>
-      </div>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  )}
+</motion.section>
+
     </div>
   );
 }

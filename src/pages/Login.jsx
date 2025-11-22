@@ -1,100 +1,65 @@
 import { useState } from "react";
-import { Fuel } from "lucide-react";
-import { motion } from "framer-motion";
-import axios from "../services/api";
+import { useNavigate } from "react-router-dom";
 
 export default function Login() {
-  const [form, setForm] = useState({ username: "", password: "" });
-  const [loading, setLoading] = useState(false);
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const navigate = useNavigate();
 
-  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
- const handleSubmit = async (e) => {
-  e.preventDefault();
-  setError("");
-  setLoading(true);
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setError("");
+    try {
+      const res = await fetch("http://127.0.0.1:5000/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
+      const data = await res.json();
 
-  try {
-    // Temporary development credentials
-    if (form.username === "admin@gmail.com" && form.password === "1234") {
-      localStorage.setItem("token", "dev-temp-token");
-      window.location.href = "/dashboard";
-      return;
+      if (res.ok) {
+        localStorage.setItem("token", data.token);
+        navigate("/dashboard");
+      } else {
+        setError(data.msg || "Invalid credentials");
+      }
+    } catch (err) {
+      setError("Server error, please try again later.",err);
     }
-
-    // Otherwise, call your backend
-    const res = await axios.post("/auth/login", form);
-    localStorage.setItem("token", res.data.access_token);
-    window.location.href = "/dashboard";
-  } catch (err) {
-    setError("Invalid credentials. Try again.");
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[var(--ocean)] to-[var(--aqua)] text-slate-700">
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="bg-white rounded-2xl shadow-2xl p-8 w-[90%] max-w-md"
-      >
-        {/* Logo / Header */}
-        <div className="flex items-center gap-3 mb-6">
-          <div className="h-10 w-10 rounded-xl bg-[var(--ocean)] grid place-items-center">
-            <Fuel className="text-white" size={20} />
-          </div>
-          <h1 className="text-xl font-semibold text-[var(--ocean)]">
-            Fuel Stock Manager
-          </h1>
-        </div>
-
-        {/* Login Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm mb-1 font-medium">Username</label>
-            <input
-              type="text"
-              name="username"
-              value={form.username}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--aqua)]"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm mb-1 font-medium">Password</label>
-            <input
-              type="password"
-              name="password"
-              value={form.password}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--aqua)]"
-              required
-            />
-          </div>
-
-          {error && <p className="text-red-500 text-sm">{error}</p>}
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-[var(--ocean)] text-white py-2 rounded-xl mt-2 hover:brightness-105 transition"
-          >
-            {loading ? "Signing in..." : "Sign In"}
-          </button>
-        </form>
-
-        {/* Footer */}
-        <p className="text-xs text-center text-slate-500 mt-4">
-          © {new Date().getFullYear()} Fuel Stock Management System
-        </p>
-      </motion.div>
+    <div className="min-h-screen bg-[var(--ice)] flex items-center justify-center">
+      <form onSubmit={handleLogin} className="bg-white p-8 rounded-2xl shadow-xl w-80">
+        <h2 className="text-2xl font-semibold text-center mb-6 text-[var(--ocean)]">
+          Login
+        </h2>
+        <input
+          type="text"
+          placeholder="Username"
+          className="w-full mb-3 p-2 border rounded-md"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+        />
+        <input
+          type="password"
+          placeholder="Password"
+          className="w-full mb-4 p-2 border rounded-md"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+        {error && <p className="text-red-500 text-sm mb-2">{error}</p>}
+        <button
+          type="submit"
+          className="w-full py-2 rounded-md text-white font-semibold hover:opacity-90"
+          style={{
+            background: "linear-gradient(135deg, #35D7FF, #8CEBFF)",
+          }}
+        >
+          Login
+        </button>
+      </form>
     </div>
   );
 }
-

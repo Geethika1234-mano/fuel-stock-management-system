@@ -1,6 +1,6 @@
 // src/api/api.js
 
-export const API_BASE = import.meta.env.VITE_API_URL";
+export const API_BASE = import.meta.env.VITE_API_URL;
 
 // Generic API fetch wrapper
 export async function apiFetch(path, options = {}) {
@@ -31,4 +31,5 @@ export async function apiFetch(path, options = {}) {
     return null;
   }
 }
+
 

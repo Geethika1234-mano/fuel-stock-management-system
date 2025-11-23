@@ -34,7 +34,6 @@ export default function Login() {
       if (!res.ok) {
         setError(data.msg || "Invalid credentials");
         setShake(true);
-
         setTimeout(() => setShake(false), 500);
       } else {
         localStorage.setItem("token", data.token);
@@ -65,9 +64,9 @@ export default function Login() {
           shake ? "animate-[shake_0.4s_ease]" : ""
         }`}
       >
-        {/* Animated Logo */}
+        {/* Static Logo */}
         <div className="flex justify-center mb-6">
-          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#35D7FF] to-[#8CEBFF] flex items-center justify-center shadow-lg animate-bounce">
+          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#35D7FF] to-[#8CEBFF] flex items-center justify-center shadow-lg">
             <span className="text-white text-3xl font-bold">⛽</span>
           </div>
         </div>
@@ -92,7 +91,7 @@ export default function Login() {
             />
           </div>
 
-          {/* PASSWORD WITH EYE ICON */}
+          {/* PASSWORD */}
           <div>
             <label className="text-sm text-slate-600">Password</label>
             <div className="mt-1 relative">

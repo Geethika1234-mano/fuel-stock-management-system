@@ -54,33 +54,58 @@ export default function SaleFormModal({ open, onClose, onSaved, initial }) {
     return Object.keys(e).length === 0;
   };
 
-  const handleSubmit = async (ev) => {
-    ev.preventDefault();
-    if (!validate()) return;
-    setSubmitting(true);
-    try {
-      const payload = {
-        StationID: Number(form.StationID),
-        FuelTypeID: Number(form.FuelTypeID),
-        SaleDate: form.SaleDate,
-        VolumeDispensed: Number(form.VolumeDispensed),
-        UnitPrice: Number(form.UnitPrice),
-        SaleValue: Number(saleValue),
-      };
-      const url = isEdit ? `/fuelsales/${initial.FuelSalesID}` : "/fuelsales";
-      const method = isEdit ? "PUT" : "POST";
-      const saved = await apiFetch(url, {
-        method,
-        body: JSON.stringify(payload),
-      });
-      onSaved?.(saved);
-      onClose?.();
-    } catch (err) {
-      onSaved?.(null, err);
-    } finally {
-      setSubmitting(false);
+ const handleSubmit = async (ev) => {
+  ev.preventDefault();
+  if (!validate()) return;
+
+  setSubmitting(true);
+
+  try {
+    const payload = {
+      StationID: Number(form.StationID),
+      FuelTypeID: Number(form.FuelTypeID),
+      SaleDate: form.SaleDate,
+      VolumeDispensed: Number(form.VolumeDispensed),
+      UnitPrice: Number(form.UnitPrice),
+      SaleValue: Number(saleValue),
+    };
+
+    const API_URL = "https://fuel-stock-backend-b6fccqcyc7exfbas.uksouth-01.azurewebsites.net";
+
+    const endpoint = isEdit
+      ? `${API_URL}/fuelsales/${initial.FuelSalesID}`
+      : `${API_URL}/fuelsales`;
+
+    const method = isEdit ? "PUT" : "POST";
+
+    const response = await fetch(endpoint, {
+      method,
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.msg || "Failed to save");
     }
-  };
+
+    const saved = await response.json();
+
+    onSaved?.(saved);
+    onClose?.();
+
+  } catch (err) {
+    console.error("Save error", err);
+    onSaved?.(null, err);
+    alert("Failed to save sale. Please try again.");
+  } finally {
+    setSubmitting(false);
+  }
+};
+
 
   if (!open) return null;
 
@@ -200,3 +225,4 @@ export default function SaleFormModal({ open, onClose, onSaved, initial }) {
     </div>
   );
 }
+

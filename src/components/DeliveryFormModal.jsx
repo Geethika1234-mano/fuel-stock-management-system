@@ -33,25 +33,62 @@ export default function DeliveryFormModal({ open, onClose, initial, onSaved }) {
 
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
+const handleSubmit = async (ev) => {
+  ev.preventDefault();
+  if (!validate()) return;
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const method = initial ? "PUT" : "POST";
-    const url = initial
-      ? `/fueldeliveries/${initial.FuelDeliveryID}`
-      : "/fueldeliveries";
+  setSubmitting(true);
 
-    try {
-      const res = await apiFetch(url, {
-        method,
-        body: JSON.stringify(form),
-      });
-      onSaved(res);
-      onClose();
-    } catch (err) {
-      console.error("Failed to save delivery:", err);
+  try {
+    const payload = {
+      StationID: Number(form.StationID),
+      FuelTypeID: Number(form.FuelTypeID),
+      SaleDate: form.SaleDate,
+      VolumeDispensed: Number(form.VolumeDispensed),
+      UnitPrice: Number(form.UnitPrice),
+      SaleValue: Number(saleValue),
+    };
+
+    const API_URL =
+      "https://fuel-stock-backend-b6fccqcyc7exfbas.uksouth-01.azurewebsites.net";
+    const endpoint = isEdit
+      ? `${API_URL}/fuelsales/${initial.FuelSalesID}`
+      : `${API_URL}/fuelsales`;
+
+    const method = isEdit ? "PUT" : "POST";
+
+    const response = await fetch(endpoint, {
+      method,
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      let errMsg = "Failed to save";
+      try {
+        const errJson = await response.json();
+        errMsg = errJson.msg || errMsg;
+      } catch {}
+      throw new Error(errMsg);
     }
-  };
+
+    const saved = await response.json();
+
+    onSaved?.(saved);
+    onClose?.();
+
+  } catch (err) {
+    console.error("Save error:", err);
+    onSaved?.(null, err);
+    alert(err.message || "Failed to save sale. Please try again.");
+  } finally {
+    setSubmitting(false);
+  }
+};
+
 
   return (
     <AnimatePresence>
@@ -183,3 +220,4 @@ export default function DeliveryFormModal({ open, onClose, initial, onSaved }) {
     </AnimatePresence>
   );
 }
+

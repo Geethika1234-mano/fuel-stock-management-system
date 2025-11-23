@@ -35,25 +35,24 @@ export default function DeliveryFormModal({ open, onClose, initial, onSaved }) {
     setForm({ ...form, [e.target.name]: e.target.value });
 const handleSubmit = async (ev) => {
   ev.preventDefault();
-  if (!validate()) return;
 
-  setSubmitting(true);
+  const isEdit = Boolean(initial?.FuelDeliveryID);
+
+  const payload = {
+    StationID: Number(form.StationID),
+    TankID: Number(form.TankID),
+    SupplierID: form.SupplierID ? Number(form.SupplierID) : null,
+    ReceivedQty: Number(form.ReceivedQty),
+    DeliveryDate: form.DeliveryDate,
+  };
 
   try {
-    const payload = {
-      StationID: Number(form.StationID),
-      FuelTypeID: Number(form.FuelTypeID),
-      SaleDate: form.SaleDate,
-      VolumeDispensed: Number(form.VolumeDispensed),
-      UnitPrice: Number(form.UnitPrice),
-      SaleValue: Number(saleValue),
-    };
-
     const API_URL =
       "https://fuel-stock-backend-b6fccqcyc7exfbas.uksouth-01.azurewebsites.net";
+
     const endpoint = isEdit
-      ? `${API_URL}/fuelsales/${initial.FuelSalesID}`
-      : `${API_URL}/fuelsales`;
+      ? `${API_URL}/fueldeliveries/${initial.FuelDeliveryID}`
+      : `${API_URL}/fueldeliveries`;
 
     const method = isEdit ? "PUT" : "POST";
 
@@ -67,12 +66,8 @@ const handleSubmit = async (ev) => {
     });
 
     if (!response.ok) {
-      let errMsg = "Failed to save";
-      try {
-        const errJson = await response.json();
-        errMsg = errJson.msg || errMsg;
-      } catch {}
-      throw new Error(errMsg);
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.msg || "Failed to save delivery");
     }
 
     const saved = await response.json();
@@ -81,13 +76,10 @@ const handleSubmit = async (ev) => {
     onClose?.();
 
   } catch (err) {
-    console.error("Save error:", err);
-    onSaved?.(null, err);
-    alert(err.message || "Failed to save sale. Please try again.");
-  } finally {
-    setSubmitting(false);
+    alert(err.message);
   }
 };
+
 
 
   return (
@@ -220,4 +212,5 @@ const handleSubmit = async (ev) => {
     </AnimatePresence>
   );
 }
+
 
